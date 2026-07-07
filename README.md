@@ -55,6 +55,9 @@ Small businesses (like local restaurants) lose potential bookings and leads beca
 
 ## 💾 Database Schema
 
+<details>
+<summary><b>Click to expand database schema (PostgreSQL)</b></summary>
+
 Run this in your **Supabase SQL Editor** to set up the schema:
 
 ```sql
@@ -119,9 +122,14 @@ CREATE INDEX idx_conversations_started_at ON conversations(started_at);
 CREATE INDEX idx_leads_buying_probability ON leads(buying_probability);
 ```
 
+</details>
+
 ---
 
 ## 🚀 Running Locally
+
+<details>
+<summary><b>Click to expand local setup & development instructions</b></summary>
 
 ### 1. Setup Environment
 Clone the repository and install dependencies:
@@ -142,6 +150,8 @@ npm run dev
 ```
 *   Customer Page & Chat Widget: `http://localhost:3000`
 *   Owner Dashboard: `http://localhost:3000/dashboard`
+
+</details>
 
 ---
 
