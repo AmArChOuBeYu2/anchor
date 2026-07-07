@@ -4,8 +4,8 @@ import { generateEmbedding, generateAnswer, qualifyLead, extractContactInfo } fr
 import { findRelevantChunks, keywordFallback } from '@/lib/rag';
 import { CHAT_SYSTEM_PROMPT } from '@/lib/prompts';
 
-// Indian phone number regex — matches 10-digit numbers with optional +91 / 0 prefix
-const PHONE_REGEX = /(?:\+91[\s-]?)?(?:0)?[6-9]\d{9}\b/;
+// Flexible phone number regex — matches 8-14 digit number blocks (crucial for demo inputs like 1345463313)
+const PHONE_REGEX = /\b\d{8,14}\b/;
 
 // Keywords that signal booking / purchase intent
 const INTENT_KEYWORDS = [
@@ -118,44 +118,54 @@ export async function POST(request) {
     const phoneMatch = message.match(PHONE_REGEX);
     const hasIntentKeyword = INTENT_KEYWORDS.some((kw) => messageLower.includes(kw));
 
-    if (phoneMatch || hasIntentKeyword) {
-      leadCaptured = true;
+    // Check if a lead already exists for this conversation
+    const { data: existingLeads } = await supabase
+      .from('leads')
+      .select('id, name, phone, intent')
+      .eq('conversation_id', conversationId)
+      .limit(1);
 
-      // Extract details using Gemini LLM (highly reliable on freeform text)
-      const extracted = await extractContactInfo(message);
-      extractedName = extracted.name;
-      extractedPhone = extracted.phone || (phoneMatch ? phoneMatch[0] : null);
+    const hasExistingLead = existingLeads && existingLeads.length > 0;
 
-      // Check if a lead already exists for this conversation
-      const { data: existingLeads } = await supabase
-        .from('leads')
-        .select('id, name, phone, intent')
-        .eq('conversation_id', conversationId)
-        .limit(1);
+    // Run extraction if there is a phone match, intent keyword, OR if this conversation already has an active lead
+    if (phoneMatch || hasIntentKeyword || hasExistingLead) {
+      const alreadyHasFullContact = hasExistingLead && existingLeads[0].name && existingLeads[0].phone;
 
-      const leadData = {
-        conversation_id: conversationId,
-        name: extractedName || (existingLeads?.[0]?.name) || null,
-        phone: extractedPhone || (existingLeads?.[0]?.phone) || null,
-        intent: hasIntentKeyword ? messageLower : (existingLeads?.[0]?.intent || 'general inquiry'),
-      };
+      // Extract details if we don't have full contact info, or if a new phone number was explicitly matched
+      if (phoneMatch || !alreadyHasFullContact) {
+        const extracted = await extractContactInfo(message);
+        extractedName = extracted.name;
+        extractedPhone = extracted.phone || (phoneMatch ? phoneMatch[0] : null);
+      }
 
-      if (existingLeads && existingLeads.length > 0) {
-        // Update existing lead with new non-null fields
-        const updateFields = {};
-        if (leadData.name) updateFields.name = leadData.name;
-        if (leadData.phone) updateFields.phone = leadData.phone;
-        if (hasIntentKeyword) updateFields.intent = leadData.intent;
+      // If we successfully extracted any new information, or if we need to initialize a new lead
+      if (extractedName || extractedPhone || hasIntentKeyword || !hasExistingLead) {
+        leadCaptured = true;
 
-        if (Object.keys(updateFields).length > 0) {
-          await supabase
-            .from('leads')
-            .update(updateFields)
-            .eq('id', existingLeads[0].id);
+        const leadData = {
+          conversation_id: conversationId,
+          name: extractedName || (existingLeads?.[0]?.name) || null,
+          phone: extractedPhone || (existingLeads?.[0]?.phone) || null,
+          intent: hasIntentKeyword ? messageLower : (existingLeads?.[0]?.intent || 'general inquiry'),
+        };
+
+        if (hasExistingLead) {
+          // Update existing lead with new non-null fields
+          const updateFields = {};
+          if (extractedName) updateFields.name = extractedName;
+          if (extractedPhone) updateFields.phone = extractedPhone;
+          if (hasIntentKeyword) updateFields.intent = leadData.intent;
+
+          if (Object.keys(updateFields).length > 0) {
+            await supabase
+              .from('leads')
+              .update(updateFields)
+              .eq('id', existingLeads[0].id);
+          }
+        } else {
+          // Create new lead
+          await supabase.from('leads').insert(leadData);
         }
-      } else {
-        // Create new lead
-        await supabase.from('leads').insert(leadData);
       }
     }
 
