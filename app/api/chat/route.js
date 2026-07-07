@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase';
-import { generateEmbedding, generateAnswer, qualifyLead } from '@/lib/gemini';
+import { generateEmbedding, generateAnswer, qualifyLead, extractContactInfo } from '@/lib/gemini';
 import { findRelevantChunks, keywordFallback } from '@/lib/rag';
 import { CHAT_SYSTEM_PROMPT } from '@/lib/prompts';
 
@@ -75,8 +75,75 @@ export async function POST(request) {
 
     if (userMsgError) {
       console.error('[chat] Failed to store user message:', userMsgError);
-      // Non-fatal: continue anyway
     }
+
+    // --- Load conversation history (last 10 messages) ---------------------
+    const { data: historyRows } = await supabase
+      .from('messages')
+      .select('role, content')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true })
+      .limit(10);
+
+    // Exclude the message we just inserted (it's the last one)
+    const conversationHistory = (historyRows || []).slice(0, -1);
+
+    // --- Lead detection & extraction (Run before generation) --------------
+    let leadCaptured = false;
+    let extractedPhone = null;
+    let extractedName = null;
+
+    const messageLower = message.toLowerCase();
+    const phoneMatch = message.match(PHONE_REGEX);
+    const hasIntentKeyword = INTENT_KEYWORDS.some((kw) => messageLower.includes(kw));
+
+    if (phoneMatch || hasIntentKeyword) {
+      leadCaptured = true;
+
+      // Extract details using Gemini LLM (highly reliable on freeform text)
+      const extracted = await extractContactInfo(message);
+      extractedName = extracted.name;
+      extractedPhone = extracted.phone || (phoneMatch ? phoneMatch[0] : null);
+
+      // Check if a lead already exists for this conversation
+      const { data: existingLeads } = await supabase
+        .from('leads')
+        .select('id, name, phone, intent')
+        .eq('conversation_id', conversationId)
+        .limit(1);
+
+      const leadData = {
+        conversation_id: conversationId,
+        name: extractedName || (existingLeads?.[0]?.name) || null,
+        phone: extractedPhone || (existingLeads?.[0]?.phone) || null,
+        intent: hasIntentKeyword ? messageLower : (existingLeads?.[0]?.intent || 'general inquiry'),
+      };
+
+      if (existingLeads && existingLeads.length > 0) {
+        // Update existing lead with new non-null fields
+        const updateFields = {};
+        if (leadData.name) updateFields.name = leadData.name;
+        if (leadData.phone) updateFields.phone = leadData.phone;
+        if (hasIntentKeyword) updateFields.intent = leadData.intent;
+
+        if (Object.keys(updateFields).length > 0) {
+          await supabase
+            .from('leads')
+            .update(updateFields)
+            .eq('id', existingLeads[0].id);
+        }
+      } else {
+        // Create new lead
+        await supabase.from('leads').insert(leadData);
+      }
+    }
+
+    // --- Load current lead state from database ----------------------------
+    const { data: currentLead } = await supabase
+      .from('leads')
+      .select('name, phone')
+      .eq('conversation_id', conversationId)
+      .maybeSingle();
 
     // --- Load document chunks from Supabase ------------------------------
     const { data: allChunks, error: chunksError } = await supabase
@@ -96,30 +163,23 @@ export async function POST(request) {
     const queryEmbedding = await generateEmbedding(message);
 
     if (queryEmbedding && chunks.length > 0) {
-      // Semantic search
       relevantChunks = findRelevantChunks(queryEmbedding, chunks, 5);
     } else if (chunks.length > 0) {
-      // Keyword fallback
       usedFallback = true;
       relevantChunks = keywordFallback(message, chunks, 3);
     }
 
     // Build context string
-    const contextStr =
+    let contextStr =
       relevantChunks.length > 0
         ? relevantChunks.map((c, i) => `[Source ${i + 1}] ${c.chunk_text}`).join('\n\n')
         : 'No relevant documents found.';
 
-    // --- Load conversation history (last 10 messages) ---------------------
-    const { data: historyRows } = await supabase
-      .from('messages')
-      .select('role, content')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
-      .limit(10);
-
-    // Exclude the message we just inserted (it's the last one)
-    const conversationHistory = (historyRows || []).slice(0, -1);
+    // Inject current lead status into context to guide Gemini behavior
+    if (currentLead && (currentLead.name || currentLead.phone)) {
+      const clientStateStr = `[Customer Info Status] Name: ${currentLead.name || 'Unknown'}, Phone: ${currentLead.phone || 'N/A'}. (Do NOT ask for their contact details again as we already have them. Acknowledge receipt of this info if they just shared it by thanking them by name.)`;
+      contextStr = `${contextStr}\n\n${clientStateStr}`;
+    }
 
     // --- Generate AI response ---------------------------------------------
     let responseText = await generateAnswer(
@@ -152,69 +212,8 @@ export async function POST(request) {
       console.error('[chat] Failed to store assistant message:', asstMsgError);
     }
 
-    // --- Lead detection ---------------------------------------------------
-    let leadCaptured = false;
-
-    const messageLower = message.toLowerCase();
-    const phoneMatch = message.match(PHONE_REGEX);
-    const hasIntentKeyword = INTENT_KEYWORDS.some((kw) => messageLower.includes(kw));
-
-    if (phoneMatch || hasIntentKeyword) {
-      leadCaptured = true;
-
-      // Try to extract a name — simple heuristic: "my name is X" or "I'm X" or "this is X"
-      let extractedName = null;
-      const namePatterns = [
-        /my name is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i,
-        /i(?:'m| am)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i,
-        /this is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i,
-        /(?:call me|name's)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i,
-      ];
-
-      // Search through current message and recent history
-      const allText = [message, ...conversationHistory.filter(m => m.role === 'user').map(m => m.content)].join(' ');
-      for (const pattern of namePatterns) {
-        const match = allText.match(pattern);
-        if (match) {
-          extractedName = match[1];
-          break;
-        }
-      }
-
-      // Check if a lead already exists for this conversation
-      const { data: existingLeads } = await supabase
-        .from('leads')
-        .select('id, name, phone')
-        .eq('conversation_id', conversationId)
-        .limit(1);
-
-      const leadData = {
-        conversation_id: conversationId,
-        name: extractedName || (existingLeads?.[0]?.name) || null,
-        phone: phoneMatch ? phoneMatch[0] : (existingLeads?.[0]?.phone) || null,
-        intent: hasIntentKeyword ? messageLower : 'general inquiry',
-      };
-
-      if (existingLeads && existingLeads.length > 0) {
-        // Update existing lead
-        const updateFields = {};
-        if (leadData.name) updateFields.name = leadData.name;
-        if (leadData.phone) updateFields.phone = leadData.phone;
-        if (hasIntentKeyword) updateFields.intent = leadData.intent;
-
-        if (Object.keys(updateFields).length > 0) {
-          await supabase
-            .from('leads')
-            .update(updateFields)
-            .eq('id', existingLeads[0].id);
-        }
-      } else {
-        // Create new lead
-        await supabase.from('leads').insert(leadData);
-      }
-
-      // --- Trigger lead qualification (async, non-blocking) ----------------
-      // Build full transcript for qualification
+    // --- Trigger async lead qualification (runs in background) -----------
+    if (leadCaptured || currentLead) {
       const { data: fullHistory } = await supabase
         .from('messages')
         .select('role, content')
@@ -226,12 +225,9 @@ export async function POST(request) {
           .map((m) => `${m.role === 'user' ? 'Customer' : 'Assistant'}: ${m.content}`)
           .join('\n');
 
-        // Run qualification (don't await at the top level to avoid blocking response,
-        // but we do want to update the lead). We use a self-executing async block.
         qualifyLead(transcript)
           .then(async (qualification) => {
             if (qualification) {
-              // Fetch the lead again to get the correct ID
               const { data: leadToUpdate } = await supabase
                 .from('leads')
                 .select('id')
@@ -260,11 +256,13 @@ export async function POST(request) {
       }
     }
 
+    const finalPhone = extractedPhone || (currentLead?.phone) || (phoneMatch ? phoneMatch[0] : null);
+
     return NextResponse.json({
       response: responseText,
       conversationId,
-      leadCaptured,
-      ...(phoneMatch && { phone: phoneMatch[0] }),
+      leadCaptured: leadCaptured || !!currentLead,
+      ...(finalPhone && { phone: finalPhone }),
       ...(usedFallback && { note: 'Used keyword fallback — embedding API was unavailable' }),
     });
   } catch (error) {
@@ -275,3 +273,4 @@ export async function POST(request) {
     );
   }
 }
+
