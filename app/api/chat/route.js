@@ -15,6 +15,27 @@ const INTENT_KEYWORDS = [
 ];
 
 /**
+ * Clean raw document chunks to strip out markdown syntax, list prefixes, 
+ * and formatting dividers so it reads like a standard conversational sentence.
+ */
+function cleanChunkText(text) {
+  if (!text) return "";
+  return text
+    .split('\n')
+    // Remove lines that are just dividers like === or ---
+    .filter(line => !/^[=\-\s#_*]+$/.test(line))
+    .map(line => {
+      // Remove leading bullets, numbers, headers, and Q:/A: markers
+      return line
+        .replace(/^[\s*\-\•\d\.\:\)\(]+(Q:|A:)?\s*/i, '')
+        .trim();
+    })
+    .filter(line => line.length > 0)
+    .join(' ');
+}
+
+
+/**
  * POST /api/chat
  *
  * Core RAG chat endpoint. Handles conversation management, retrieval,
@@ -192,14 +213,12 @@ export async function POST(request) {
     // Fallback if Gemini fails
     if (!responseText) {
       if (relevantChunks.length > 0) {
-        responseText =
-          "I'm having a little trouble right now, but here's what I found from our information:\n\n" +
-          relevantChunks[0].chunk_text +
-          '\n\nPlease feel free to call us directly for more details!';
+        const cleanedChunk = cleanChunkText(relevantChunks[0].chunk_text);
+        responseText = `Here's what I can tell you: ${cleanedChunk}. For booking details, please call us directly or leave your name and number and we'll follow up.`;
       } else {
         responseText =
           "I apologize, but I'm experiencing some technical difficulties at the moment. " +
-          'Please try again in a moment, or feel free to call us directly at the restaurant.';
+          "For reservation or menu inquiries, please leave your name and number and someone from our team will get back to you shortly.";
       }
     }
 
