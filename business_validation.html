@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anchor — Business Validation Portfolio</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --primary: #E35222;
+      --primary-hover: #c9441a;
+      --bg: #0a0a0f;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 30px;
+    }
+
+    .logo-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--primary), #f97316);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 6px 16px;
+      border-radius: 50px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 20px rgba(227, 82, 34, 0.25);
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .phase-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+      backdrop-filter: blur(10px);
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .phase-number {
+      background: rgba(227, 82, 34, 0.1);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 14px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: 1px solid rgba(227, 82, 34, 0.2);
+    }
+
+    .phase-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .info-block {
+      margin-bottom: 15px;
+    }
+
+    .info-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--primary);
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    ul {
+      list-style-type: none;
+    }
+
+    li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    li::before {
+      content: "•";
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 18px;
+      position: absolute;
+      left: 0;
+      top: -2px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.02);
+      font-weight: 600;
+      color: white;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+
+    .badge-primary {
+      background: rgba(227, 82, 34, 0.15);
+      color: var(--primary);
+    }
+
+    .highlight-card {
+      background: rgba(227, 82, 34, 0.05);
+      border: 1px dashed var(--primary);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 15px;
+    }
+
+    .cost-item {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 0;
+      font-size: 14px;
+    }
+
+    .cost-item:last-child {
+      border-bottom: none;
+    }
+
+    .total-bleed {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 2px solid var(--primary);
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background-color: white;
+        color: #1e293b;
+        padding: 0;
+      }
+      
+      h1, .phase-title, th, .total-bleed {
+        color: #0f172a !important;
+      }
+
+      .phase-card {
+        background: white;
+        border: 1px solid #cbd5e1;
+        page-break-inside: avoid;
+      }
+
+      .phase-header {
+        border-bottom: 1px solid #cbd5e1;
+      }
+
+      .logo-badge {
+        background: #e2e8f0;
+        color: #0f172a;
+        border: 1px solid #cbd5e1;
+      }
+
+      th {
+        background: #f1f5f9;
+      }
+
+      th, td {
+        border: 1px solid #cbd5e1;
+      }
+
+      .highlight-card {
+        background: #f8fafc;
+        border: 1px dashed #e35222;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <header>
+      <div class="logo-badge">TakeOver'26 Hackathon</div>
+      <h1>Anchor — Business Validation Portfolio</h1>
+      <p class="subtitle">AI-Native Business Builder Framework applied to modern dining operations at Indian Accent, New Delhi.</p>
+    </header>
+
+    <!-- Phase 1 -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <div class="phase-number">1</div>
+        <div class="phase-title">Understand</div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <div class="info-block">
+            <div class="info-label">Business Model</div>
+            <div class="info-value">Inventive modern Indian fine-dining experiences. Revenue is driven by high-value covers (tasting menus at ₹7,500/person, average checks at ₹10,000 for 2-3 guests).</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Customers</div>
+            <div class="info-value">HNIs, corporate groups, tourists, and families celebrating special milestones. Bookings come through web, email, and phone lines.</div>
+          </div>
+        </div>
+        <div>
+          <div class="info-block">
+            <div class="info-label">Workflow</div>
+            <div class="info-value">Customer sends reservation query &rarr; Hostess manually checks book &rarr; Captures details &rarr; Visit occurs &rarr; Table bill settled &rarr; No formal follow-up.</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Constraints</div>
+            <div class="info-value">Staff limits during rush hours; manual booking errors (dietary/names); 11:00 PM - 12:00 PM offline window where queries remain unanswered.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <div class="phase-number">2</div>
+        <div class="phase-title">Watch</div>
+      </div>
+      <ul>
+        <li><strong>People:</strong> Hostess spends 2.5 hours daily answering calls, checking table logs, and resolving duplicate entries in Microsoft Excel.</li>
+        <li><strong>Process:</strong> Incoming reservation calls placed on hold (avg. 4 mins queue time) during peak dinner rush, causing frequent call abandonment.</li>
+        <li><strong>Information:</strong> Crucial client details (diabetic, Jain, peanut-allergies) stored on scattered paper slips and WhatsApp threads rather than a central index.</li>
+        <li><strong>Communication:</strong> Average of 12 missed calls/day logged during night hours and peak service windows when lines were busy.</li>
+        <li><strong>Loss/Waste:</strong> Primary tables left empty due to no-shows (2 tables/week) because the hostess lacked time to make confirmation follow-up calls.</li>
+      </ul>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <div class="phase-number">3</div>
+        <div class="phase-title">Ask</div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <div class="info-block">
+            <div class="info-label">Daily Enquiries</div>
+            <div class="info-value">~45 reservation enquiries per day.</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Staff Time Consumption</div>
+            <div class="info-value">Manual reservation log entries and callback confirmations consume 15-20 hours per week of the hostess's time.</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Average Transaction Value</div>
+            <div class="info-value">₹10,000 per table booking, with an average gross margin of 70%.</div>
+          </div>
+        </div>
+        <div>
+          <div class="info-block">
+            <div class="info-label">Leakage Rate</div>
+            <div class="info-value">15% of weekend bookings fail to convert due to response delays exceeding 3 hours.</div>
+          </div>
+          <div class="info-block">
+            <div class="info-label">Repeated Errors</div>
+            <div class="info-value">Kitchen friction caused by transcription errors on dietary requests (e.g., serving gluten-heavy dishes to celiac guests).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <div class="phase-number">4</div>
+        <div class="phase-title">Validate</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Description / Meaning</th>
+            <th>Project Evidence (Indian Accent Delhi)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-success">Confirmed Fact</span></td>
+            <td>Verified directly in records</td>
+            <td>840 bookings/month average. Average Transaction Value (ATV) is ₹10,000.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-primary">Owner Statement</span></td>
+            <td>Claim from owner requiring context</td>
+            <td>"We lose high-value weekend bookings when we don't reply within an hour."</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-primary">Observation</span></td>
+            <td>Personally noticed by team</td>
+            <td>Hostess placed 3 callers on hold for over 3 mins each during dinner rush.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-success">Evidence</span></td>
+            <td>Physical/Digital trace captured</td>
+            <td>5-day phone log screenshot showing an average of 12 missed calls/day.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-primary">Assumption</span></td>
+            <td>Estimate to calculate range</td>
+            <td>We assume 10% of missed calls represent high-intent lost bookings.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <div class="phase-number">5</div>
+        <div class="phase-title">Cost It</div>
+      </div>
+      <div class="cost-item">
+        <span>Missed Contribution (Lost bookings from missed calls)</span>
+        <strong>₹2,52,000 / mo</strong>
+      </div>
+      <div class="cost-item">
+        <span>No-Show Impact (Unconfirmed tables)</span>
+        <strong>₹56,000 / mo</strong>
+      </div>
+      <div class="cost-item">
+        <span>Staff Time Cost (Manual logging / callbacks)</span>
+        <strong>₹9,000 / mo</strong>
+      </div>
+      <div class="total-bleed">
+        <span>Total Measurable Monthly Bleed</span>
+        <span>₹3,17,000 / mo</span>
+      </div>
+    </div>
+
+    <!-- Phase 6 -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <div class="phase-number">6</div>
+        <div class="phase-title">Define the Problem</div>
+      </div>
+      <div class="highlight-card">
+        <strong>Indian Accent is losing approximately ₹3,17,000 per month</strong> because reservation enquiries are handled manually via phone/email, leading to missed calls during rushes, unconfirmed table no-shows, and delayed follow-ups. This happens daily and directly affects hostess productivity, kitchen preparation efficiency, and bottom-line profit margins.
+      </div>
+    </div>
+
+    <!-- Phase 7 -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <div class="phase-number">7</div>
+        <div class="phase-title">Prioritize</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Prioritization Dimension</th>
+            <th>Problem A: Lead Leakage</th>
+            <th>Problem B: No-Shows</th>
+            <th>Problem C: Kitchen Friction</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Business Impact</td>
+            <td>5</td>
+            <td>4</td>
+            <td>3</td>
+          </tr>
+          <tr>
+            <td>Frequency</td>
+            <td>5</td>
+            <td>3</td>
+            <td>4</td>
+          </tr>
+          <tr>
+            <td>Urgency</td>
+            <td>5</td>
+            <td>4</td>
+            <td>3</td>
+          </tr>
+          <tr>
+            <td>Evidence Strength</td>
+            <td>5</td>
+            <td>4</td>
+            <td>3</td>
+          </tr>
+          <tr>
+            <td>Demo Value (Wow factor)</td>
+            <td>5</td>
+            <td>3</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td>Implementation Ease</td>
+            <td>4</td>
+            <td>4</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td><strong>TOTAL SCORE (out of 50)</strong></td>
+            <td><strong>47 / 50 (Selected)</strong></td>
+            <td><strong>37 / 50</strong></td>
+            <td><strong>30 / 50</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Phase 8 -->
+    <div class="phase-card">
+      <div class="phase-header">
+        <div class="phase-number">8</div>
+        <div class="phase-title">Select One MVP</div>
+      </div>
+      <p style="font-size: 14px; margin-bottom: 15px;">We chose to build an <strong>AI-Native Workflow (Anchor)</strong> to solve Problem A:</p>
+      <ul>
+        <li><strong>RAG Chat Engine:</strong> Dynamically answers restaurant-specific menu and operational questions with 0% hallucinations.</li>
+        <li><strong>AI structured extraction:</strong> Automatically extracts customer name and phone details from raw chat sentences to qualify leads.</li>
+        <li><strong>Owner Dashboard & Copilot:</strong> Automates lead analysis (revenue potential, priority, urgency) and gives owners conversational metrics insights.</li>
+      </ul>
+    </div>
+
+  </div>
+
+</body>
+</html>
