@@ -267,6 +267,25 @@ export default function ChatWidget() {
         </div>
       )}
 
+      {/* ─── Telegram Floating Button ─── */}
+      {!isOpen && (
+        <a
+          href="https://t.me/AnchorAccentBot"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-24 right-7 z-[10000] w-12 h-12 rounded-full bg-[#0088cc] hover:bg-[#0077b5] flex items-center justify-center shadow-xl hover:shadow-sky-500/20 transition-all duration-300 hover:scale-110 group animate-slide-up"
+          title="Chat with our Telegram Bot"
+        >
+          {/* Tooltip on hover */}
+          <span className="absolute right-14 scale-0 group-hover:scale-100 transition-all duration-200 origin-right whitespace-nowrap bg-slate-800 border border-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg shadow-lg">
+            Chat on Telegram
+          </span>
+          <svg className="w-5.5 h-5.5 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.98 1.25-5.59 3.69-.53.36-1 .53-1.42.52-.46-.01-1.35-.26-2.01-.48-.81-.27-1.46-.42-1.4-.88.03-.24.36-.49.99-.74 3.87-1.69 6.45-2.8 7.74-3.35 3.69-1.54 4.45-1.81 4.95-1.82.11 0 .36.03.52.16.14.11.18.27.19.38.01.08.01.23 0 .3z"/>
+          </svg>
+        </a>
+      )}
+
       {/* ─── Floating Button ─── */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
