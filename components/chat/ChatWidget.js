@@ -286,6 +286,25 @@ export default function ChatWidget() {
         </a>
       )}
 
+      {/* ─── WhatsApp Floating Button ─── */}
+      {!isOpen && (
+        <a
+          href="https://wa.me/14155238886?text=join%20obtain-farm"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-40 right-7 z-[10000] w-12 h-12 rounded-full bg-[#25D366] hover:bg-[#20ba5a] flex items-center justify-center shadow-xl hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-110 group animate-slide-up"
+          title="Chat with our WhatsApp Bot"
+        >
+          {/* Tooltip on hover */}
+          <span className="absolute right-14 scale-0 group-hover:scale-100 transition-all duration-200 origin-right whitespace-nowrap bg-slate-800 border border-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg shadow-lg">
+            Chat on WhatsApp
+          </span>
+          <svg className="w-5.5 h-5.5 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.05 4.91A9.816 9.816 0 0 0 12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01zm-7.01 15.24c-1.48 0-2.93-.4-4.18-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.098 8.098 0 0 1-1.24-4.38c0-4.46 3.63-8.09 8.1-8.09 2.16 0 4.2.84 5.73 2.38a8.01 8.01 0 0 1 2.37 5.72c-.01 4.47-3.64 8.09-8.09 8.09z"/>
+          </svg>
+        </a>
+      )}
+
       {/* ─── Floating Button ─── */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
