@@ -56,8 +56,40 @@ export async function POST(request) {
 
     // --- Create or verify conversation ------------------------------------
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    let customerIdentifier = null;
+
+    // If conversationId is provided but is not a valid UUID (e.g., whatsapp phone/contact id),
+    // treat it as the customerIdentifier and resolve it to a DB conversation UUID.
     if (conversationId && !uuidRegex.test(conversationId)) {
+      customerIdentifier = conversationId;
       conversationId = null;
+    }
+
+    if (customerIdentifier) {
+      const { data: existingConv } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('customer_identifier', customerIdentifier)
+        .maybeSingle();
+
+      if (existingConv) {
+        conversationId = existingConv.id;
+      } else {
+        const { data: newConv, error: convError } = await supabase
+          .from('conversations')
+          .insert({ customer_identifier: customerIdentifier })
+          .select('id')
+          .single();
+
+        if (convError) {
+          console.error('[chat] Failed to create customer conversation:', convError);
+          return NextResponse.json(
+            { error: 'Failed to create customer conversation', details: convError.message },
+            { status: 500 }
+          );
+        }
+        conversationId = newConv.id;
+      }
     }
 
     if (conversationId) {
